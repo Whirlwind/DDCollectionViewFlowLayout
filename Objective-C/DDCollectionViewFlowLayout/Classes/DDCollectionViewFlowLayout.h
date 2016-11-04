@@ -12,7 +12,7 @@
 
 @protocol DDCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
 
-@required
+@optional
 /**
  *  The delegate method set the collectionView will flow layout as the number columns in each section.
  *
@@ -31,9 +31,22 @@
 @interface DDCollectionViewFlowLayout : UICollectionViewFlowLayout
 
 @property (nonatomic, weak) IBOutlet id<DDCollectionViewDelegateFlowLayout> delegate;
+
 /**
  *  Defalut is NO, set it's YES the collectionView's header will sticky on the section top.
  */
 @property (nonatomic) IBInspectable BOOL enableStickyHeaders;
+
+/**
+ *  Defalut is YES, set it's YES the collectionView's itemSize will reset the height to itemSize.height / itemSize.width * actualItemSize.width.
+ */
+@property (nonatomic) IBInspectable BOOL enableScaleItemSize;
+
+/**
+ *  Defalut is 3, set the number of columns.
+ */
+@property (nonatomic) IBInspectable NSUInteger numberOfColumns;
+
+- (CGSize)actualSizeForItemAtIndexPath:(NSIndexPath *)indexPath;
 
 @end

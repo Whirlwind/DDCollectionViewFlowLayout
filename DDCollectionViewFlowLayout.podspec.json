@@ -1,0 +1,20 @@
+{
+    "authors": {
+        "DeJohn Dong": "dongjia_9251@126.com"
+    }, 
+    "frameworks": "UIKit", 
+    "homepage": "https://github.com/openboy2012/DDCollectionViewFlowLayout.git", 
+    "license": "MIT", 
+    "name": "DDCollectionViewFlowLayout", 
+    "platforms": {
+        "ios": "6.0"
+    }, 
+    "requires_arc": true, 
+    "source": {
+        "git": "https://github.com/openboy2012/DDCollectionViewFlowLayout.git", 
+        "branch": "master"
+    }, 
+    "source_files": "Objective-C/DDCollectionViewFlowLayout/Classes/*.{h,m}", 
+    "summary": "a CollectionViewFlowLayout implement the Waterfall Effect", 
+    "version": "0.5"
+}

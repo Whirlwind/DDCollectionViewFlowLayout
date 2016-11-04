@@ -35,6 +35,8 @@
  */
 @property (nonatomic) UIEdgeInsets currentEdgeInsets;
 
+@property (nonatomic, assign) CGSize actualItemSize;
+
 @end
 
 @implementation DDCollectionViewFlowLayout
@@ -51,7 +53,7 @@
 }
 
 - (void)prepareLayout {
-    
+    self.numberOfColumns = 3;
     NSUInteger numberOfSections = self.collectionView.numberOfSections;
     self.sectionRects = [[NSMutableArray alloc] initWithCapacity:numberOfSections];
     self.columnRectsInSection = [[NSMutableArray alloc] initWithCapacity:numberOfSections];
@@ -132,40 +134,20 @@
     /**
      *  Begin add the body items layout attributes in the section.
      */
-    UIEdgeInsets sectionInsets = UIEdgeInsetsZero;
-    
-    // Check the flow layout if implementation the `collectionView:layout:insetForSectionAtIndex:` protocol method. If not implementation use the default insets is zero.
-    if([self.delegate respondsToSelector:@selector(collectionView:layout:insetForSectionAtIndex:)]) {
-        sectionInsets = [self.delegate collectionView:collectionView layout:self insetForSectionAtIndex:section];
-    }
-    
+    UIEdgeInsets sectionInsets = [self insetForSectionAtIndex:section];
     [self.sectionInsetses addObject:[NSValue valueWithUIEdgeInsets:sectionInsets]];
-    
-    /**
-     *  Set the lineSpacing & interitemSpacing between the cells, default values is 0.0f.
-     */
-    CGFloat lineSpacing = self.minimumLineSpacing;
-    CGFloat interitemSpacing = self.minimumInteritemSpacing;
 
-    // Check the flow layout if implementation the `collectionView:layout:minimumInteritemSpacingForSectionAtIndex:` & `collectionView:layout:minimumLineSpacingForSectionAtIndex:` protocol methods. If implementation set the lineSpacing & interitemSpacing value from the protocol methods.
-    if ([self.delegate respondsToSelector:@selector(collectionView:layout:minimumInteritemSpacingForSectionAtIndex:)]) {
-        interitemSpacing = [self.delegate collectionView:collectionView layout:self minimumInteritemSpacingForSectionAtIndex:section];
-    }
-    
-    if ([self.delegate respondsToSelector:@selector(collectionView:layout:minimumLineSpacingForSectionAtIndex:)]) {
-        lineSpacing = [self.delegate collectionView:collectionView layout:self minimumLineSpacingForSectionAtIndex:section];
-    }
-    
+    CGFloat lineSpacing = [self lineSpacingForSectionAtIndex:section];
+    CGFloat interitemSpacing = [self interitemSpacingForSectionAtIndex:section];
+    NSUInteger numberOfColumns = [self numberOfColumnsInSection:indexPath.section];
+
     CGRect itemsContentRect;
     itemsContentRect.origin.x = sectionInsets.left;
     itemsContentRect.origin.y = headerHeight + sectionInsets.top;
-    
-    NSUInteger numberOfColumns = [self.delegate collectionView:collectionView layout:self numberOfColumnsInSection:section];
+
+
     itemsContentRect.size.width = CGRectGetWidth(collectionView.frame) - (sectionInsets.left + sectionInsets.right);
-    
-    CGFloat columnSpace = itemsContentRect.size.width - (interitemSpacing * (numberOfColumns - 1));
-    CGFloat columnWidth = (columnSpace/numberOfColumns);
-    
+
     // Initialize an empty mutable array earch column.
     [self.columnRectsInSection addObject:[NSMutableArray arrayWithCapacity:numberOfColumns]];
     for (NSUInteger colIdx = 0; colIdx < numberOfColumns; ++colIdx)
@@ -181,22 +163,27 @@
         if (destRowInColumn == 0) {
             lastItemInColumnOffsetY += sectionRect.origin.y;
         }
-        
+
+        CGSize actualSize = [self actualSizeForItemAtIndexPath:itemPath];
         /**
          *  Default item's rectangles is a square.
          */
         CGRect itemRect;
-        itemRect.origin.x = itemsContentRect.origin.x + destColumnIdx * (interitemSpacing + columnWidth);
+        itemRect.origin.x = itemsContentRect.origin.x + destColumnIdx * (interitemSpacing + actualSize.width);
         itemRect.origin.y = lastItemInColumnOffsetY + (destRowInColumn > 0 ? lineSpacing: sectionInsets.top);
-        itemRect.size.width = columnWidth;
-        itemRect.size.height = columnWidth;
+        itemRect.size = actualSize;
         
         // Check the flow layout if implementation the `collectionView:layout:sizeForItemAtIndexPath:` protocol methods. If implementation set the itemRect size's height is the protocol return size's height.
+        CGSize itemSize = self.itemSize;
         if ([self.delegate respondsToSelector:@selector(collectionView:layout:sizeForItemAtIndexPath:)]) {
-            CGSize itemSize = [self.delegate collectionView:collectionView layout:self sizeForItemAtIndexPath:itemPath];
+            itemSize = [self.delegate collectionView:collectionView layout:self sizeForItemAtIndexPath:itemPath];
             itemRect.size.height = itemSize.height;
         }
-                
+
+        if (itemSize.height > 0 && self.enableScaleItemSize) {
+            itemRect.size.height = itemSize.height * itemRect.size.width / itemSize.width;
+        }
+
         UICollectionViewLayoutAttributes *itemAttributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:itemPath];
         itemAttributes.frame = itemRect;
         [self.layoutItemAttributes[section] addObject:itemAttributes];
@@ -395,6 +382,60 @@
     }
     return visibleIndexes;
 }
+
+- (CGFloat)lineSpacingForSectionAtIndex:(NSInteger)section {
+    if ([self.delegate respondsToSelector:@selector(collectionView:layout:minimumLineSpacingForSectionAtIndex:)]) {
+        return [self.delegate collectionView:self.collectionView layout:self minimumLineSpacingForSectionAtIndex:section];
+    }
+    return self.minimumLineSpacing;
+}
+
+- (CGFloat)interitemSpacingForSectionAtIndex:(NSInteger)section {
+    if ([self.delegate respondsToSelector:@selector(collectionView:layout:minimumInteritemSpacingForSectionAtIndex:)]) {
+        return [self.delegate collectionView:self.collectionView layout:self minimumInteritemSpacingForSectionAtIndex:section];
+    }
+    return self.minimumInteritemSpacing;
+}
+
+- (NSInteger)numberOfColumnsInSection:(NSInteger)section {
+    if ([self.delegate respondsToSelector:@selector(collectionView:layout:numberOfColumnsInSection:)]) {
+        return [self.delegate collectionView:self.self.collectionView layout:self numberOfColumnsInSection:section];
+    }
+    return self.numberOfColumns;
+}
+
+- (UIEdgeInsets)insetForSectionAtIndex:(NSInteger)section {
+    if([self.delegate respondsToSelector:@selector(collectionView:layout:insetForSectionAtIndex:)]) {
+        return [self.delegate collectionView:self.collectionView layout:self insetForSectionAtIndex:section];
+    }
+    return self.sectionInset;
+}
+
+- (CGSize)actualSizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    UIEdgeInsets sectionInsets = [self insetForSectionAtIndex:indexPath.section];
+    NSUInteger numberOfColumns = [self numberOfColumnsInSection:indexPath.section];
+    CGFloat interitemSpacing = [self interitemSpacingForSectionAtIndex:indexPath.section];
+
+    CGFloat contentWidth = CGRectGetWidth(self.collectionView.frame) - (sectionInsets.left + sectionInsets.right);
+
+    CGFloat columnSpace = contentWidth - (interitemSpacing * (numberOfColumns - 1));
+    CGFloat columnWidth = (columnSpace/numberOfColumns);
+
+    CGSize itemSize = self.itemSize;
+    if ([self.delegate respondsToSelector:@selector(collectionView:layout:sizeForItemAtIndexPath:)]) {
+        itemSize = [self.delegate collectionView:self.collectionView layout:self sizeForItemAtIndexPath:indexPath];
+    }
+
+    CGFloat columnHeight = itemSize.height;
+    if (columnHeight == 0) {
+        columnHeight = columnWidth;
+    } else if (self.enableScaleItemSize) {
+        columnHeight = itemSize.height * columnWidth / itemSize.width;
+    }
+
+    return CGSizeMake(floor(columnWidth), floor(columnHeight));
+}
+
 
 #pragma mark - Sticky Header implementation methods
 
