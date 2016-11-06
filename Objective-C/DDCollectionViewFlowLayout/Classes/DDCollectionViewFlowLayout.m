@@ -41,6 +41,13 @@
 
 @implementation DDCollectionViewFlowLayout
 
+- (instancetype)init {
+    if (self = [super init]) {
+        _numberOfColumns = 3;
+    }
+    return self;
+}
+
 #pragma mark - UISubclassingHooks Category Methods
 
 - (CGSize)collectionViewContentSize {
@@ -53,7 +60,6 @@
 }
 
 - (void)prepareLayout {
-    self.numberOfColumns = 3;
     NSUInteger numberOfSections = self.collectionView.numberOfSections;
     self.sectionRects = [[NSMutableArray alloc] initWithCapacity:numberOfSections];
     self.columnRectsInSection = [[NSMutableArray alloc] initWithCapacity:numberOfSections];
