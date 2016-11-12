@@ -48,6 +48,13 @@
     return self;
 }
 
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder  {
+    if (self = [super init]) {
+        _numberOfColumns = 3;
+    }
+    return self;
+}
+
 #pragma mark - UISubclassingHooks Category Methods
 
 - (CGSize)collectionViewContentSize {
