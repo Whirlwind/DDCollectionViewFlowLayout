@@ -26,6 +26,11 @@
                      layout:(DDCollectionViewFlowLayout *)layout
    numberOfColumnsInSection:(NSInteger)section;
 
+- (CGFloat)collectionView:(UICollectionView *)collectionView
+                   layout:(DDCollectionViewFlowLayout *)layout
+ heightForItemAtIndexPath:(NSIndexPath *)indexPath
+            withItemWidth:(CGFloat)width;
+
 @end
 
 @interface DDCollectionViewFlowLayout : UICollectionViewFlowLayout

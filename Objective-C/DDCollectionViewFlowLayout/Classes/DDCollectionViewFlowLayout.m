@@ -432,21 +432,26 @@
     CGFloat contentWidth = CGRectGetWidth(self.collectionView.frame) - (sectionInsets.left + sectionInsets.right);
 
     CGFloat columnSpace = contentWidth - (interitemSpacing * (numberOfColumns - 1));
-    CGFloat columnWidth = (columnSpace/numberOfColumns);
+    CGFloat columnWidth = floor(columnSpace/numberOfColumns);
 
-    CGSize itemSize = self.itemSize;
-    if ([self.delegate respondsToSelector:@selector(collectionView:layout:sizeForItemAtIndexPath:)]) {
-        itemSize = [self.delegate collectionView:self.collectionView layout:self sizeForItemAtIndexPath:indexPath];
+    CGFloat columnHeight;
+    if ([self.delegate respondsToSelector:@selector(collectionView:layout:heightForItemAtIndexPath:withItemWidth:)]) {
+        columnHeight = [self.delegate collectionView:self.collectionView layout:self heightForItemAtIndexPath:indexPath withItemWidth:columnWidth];
+    } else {
+        CGSize itemSize = self.itemSize;
+        if ([self.delegate respondsToSelector:@selector(collectionView:layout:sizeForItemAtIndexPath:)]) {
+            itemSize = [self.delegate collectionView:self.collectionView layout:self sizeForItemAtIndexPath:indexPath];
+        }
+
+        columnHeight = itemSize.height;
+        if (columnHeight == 0) {
+            columnHeight = columnWidth;
+        } else if (self.enableScaleItemSize) {
+            columnHeight = itemSize.height * columnWidth / itemSize.width;
+        }
     }
 
-    CGFloat columnHeight = itemSize.height;
-    if (columnHeight == 0) {
-        columnHeight = columnWidth;
-    } else if (self.enableScaleItemSize) {
-        columnHeight = itemSize.height * columnWidth / itemSize.width;
-    }
-
-    return CGSizeMake(floor(columnWidth), floor(columnHeight));
+    return CGSizeMake(columnWidth, floor(columnHeight));
 }
 
 
